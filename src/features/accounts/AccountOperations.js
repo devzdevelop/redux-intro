@@ -15,19 +15,21 @@ function AccountOperations() {
 
   function handleDeposit() {
     if (!depositAmount) return;
-    dispatch(deposit(Number(depositAmount)));
+    // dispatch(deposit(Number(depositAmount), currency));
+    dispatch(deposit(depositAmount, currency));
     setDepositAmount("");
+    setCurrency("USD");
   }
 
   function handleWithdrawal() {
     if (!withdrawalAmount) return;
-    dispatch(withdraw(Number(withdrawalAmount)));
+    dispatch(withdraw(withdrawalAmount));
     setWithdrawalAmount("");
   }
 
   function handleRequestLoan() {
     if (!loanAmount || !loanPurpose) return;
-    dispatch(requestLoan(Number(loanAmount), loanPurpose));
+    dispatch(requestLoan({ loanAmount, loanPurpose }));
     setLoanAmount("");
     setLoanPurpose("");
   }
@@ -57,7 +59,9 @@ function AccountOperations() {
             <option value="GBP">British Pound</option>
           </select>
 
-          <button onClick={handleDeposit}>Deposit {depositAmount}</button>
+          <button onClick={handleDeposit} disabled={account.isLoading}>
+            {account.isLoading ? "Processing..." : `Deposit ${depositAmount}`}
+          </button>
         </div>
 
         <div>
@@ -90,9 +94,7 @@ function AccountOperations() {
 
         {account.loan > 0 && (
           <div>
-            <span>
-              Pay back {currency} ${account.loan}
-            </span>
+            <span>Pay back ${account.loan}</span>
             <button onClick={handlePayLoan}>Pay loan</button>
           </div>
         )}
