@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  balance: 100000,
+  balance: 50,
   loan: 0,
   loanPurpose: "",
   isLoading: false,
@@ -13,6 +13,7 @@ const accountSlice = createSlice({
   reducers: {
     deposit(state, action) {
       state.balance += action.payload;
+      state.isLoading = false
     },
     withdraw(state, action) {
       state.balance -= action.payload;
@@ -23,35 +24,39 @@ const accountSlice = createSlice({
       state.loanPurpose = action.payload.loanPurpose;
       state.balance += action.payload.loanAmount;
     },
-    payLoan(state, action) {
+    payLoan(state) {
       state.balance -= state.loan;
       state.loan = 0;
       state.loanPurpose = "";
     },
+    convertingCurrency(state) {
+      state.isLoading = true;
+    }
   },
 });
 
-console.log(accountSlice);
+console.log('accountSlice data: ', accountSlice);
 
-export const { deposit, withdraw, requestLoan, payLoan } = accountSlice.actions;
+export const { withdraw, requestLoan, payLoan } = accountSlice.actions; // export the action creators that redux toolkit created
+
+export function deposit(amount, currency) { // export a custom action creator that uses thunk
+  if (currency === "USD") return { type: "account/deposit", payload: amount };
+
+  return async function (dispatch, getState) {
+    // API call
+    dispatch({ type: "account/convertingCurrency", payload: true });
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`
+    );
+    const data = await res.json();
+    const convertedAmount = data.rates.USD;
+    return dispatch({ type: "account/deposit", payload: convertedAmount });
+  };
+}
 
 export default accountSlice.reducer;
 
-/*
-return {
-        ...state,
-        loan: action.payload.amount,
-        loanPurpose: action.payload.purpose,
-        balance: state.balance + action.payload.amount,
-      };
 
-return {
-        ...state,
-        loan: 0,
-        loanPurpose: "",
-        balance: state.balance - state.loan,
-      };
-*/
 /*
 export default function accountReducer(state = initialStateAccount, action) {
   switch (action.type) {
